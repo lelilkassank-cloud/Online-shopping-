@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cartwheel – Online Shopping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EEF2F4;--ink:#14232B;--muted:#5B6B73;--teal:#0F5257;--gold:#F4B63F;--line:#CBD5DA;--card:#fff;--r:14px}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Instrument Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+h1,h2,h3,.logo{font-family:'Bricolage Grotesque',system-ui,sans-serif}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+header{position:sticky;top:0;z-index:5;background:var(--teal);color:#fff;display:flex;gap:16px;align-items:center;padding:12px clamp(16px,4vw,40px)}
+.logo{font-weight:800;font-size:1.4rem;letter-spacing:-.02em}
+.search{flex:1;max-width:520px;margin-left:auto}
+.search input{width:100%;padding:10px 14px;border:0;border-radius:999px;font:inherit}
+.cartbtn{background:var(--gold);color:var(--ink);border:0;border-radius:999px;padding:10px 18px;font-weight:600}
+.hero{padding:clamp(32px,6vw,64px) clamp(16px,4vw,40px) 16px;max-width:1200px;margin:auto}
+.hero h1{font-size:clamp(2rem,5vw,3.6rem);line-height:1.05;max-width:14ch;letter-spacing:-.03em}
+.hero p{color:var(--muted);margin-top:12px;max-width:46ch}
+.bar{max-width:1200px;margin:auto;padding:16px clamp(16px,4vw,40px);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 16px;color:var(--ink)}
+.chip[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.bar select{margin-left:auto;padding:8px 12px;border-radius:8px;border:1px solid var(--line);font:inherit;background:var(--card)}
+.grid{max-width:1200px;margin:auto;padding:0 clamp(16px,4vw,40px) 64px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px}
+.card{background:var(--card);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line)}
+.pic{height:150px;display:grid;place-items:center;font-size:4rem}
+.body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;flex:1}
+.body h3{font-size:1.05rem}
+.meta{color:var(--muted);font-size:.85rem}
+.row{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:10px}
+.price{font-weight:600;font-size:1.1rem}
+.add{background:var(--teal);color:#fff;border:0;border-radius:8px;padding:8px 14px}
+.add:hover{background:var(--ink)}
+.empty{grid-column:1/-1;padding:40px;text-align:center;color:var(--muted)}
+aside{position:fixed;inset:0 0 0 auto;width:min(400px,100%);background:var(--card);box-shadow:-8px 0 30px rgba(0,0,0,.18);transform:translateX(105%);transition:transform .25s;z-index:10;display:flex;flex-direction:column}
+aside.open{transform:none}
+.ch{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line)}
+.close{background:none;border:0;font-size:1.6rem;line-height:1}
+.items{flex:1;overflow:auto;padding:8px 20px}
+.item{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.item .e{font-size:2rem;text-align:center}
+.qty{display:flex;align-items:center;gap:8px;margin-top:4px}
+.qty button{width:26px;height:26px;border-radius:50%;border:1px solid var(--line);background:#fff}
+.foot{padding:16px 20px;border-top:1px solid var(--line)}
+.ship{font-size:.85rem;color:var(--muted);margin-bottom:8px}
+.track{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:12px}
+.track i{display:block;height:100%;background:var(--teal);transition:width .25s}
+.total{display:flex;justify-content:space-between;font-weight:600;font-size:1.1rem;margin-bottom:12px}
+.buy{width:100%;background:var(--gold);color:var(--ink);border:0;border-radius:10px;padding:12px;font-weight:600}
+.buy:disabled{opacity:.5;cursor:not-allowed}
+.veil{position:fixed;inset:0;background:rgba(20,35,43,.45);opacity:0;pointer-events:none;transition:opacity .25s;z-index:9}
+.veil.on{opacity:1;pointer-events:auto}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,80px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:10px;transition:transform .25s;z-index:20}
+.toast.on{transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">Cartwheel</span>
+  <label class="search"><span hidden>Search products</span><input id="q" type="search" placeholder="Search products"></label>
+  <button class="cartbtn" id="openCart">Cart (<span id="count">0</span>)</button>
+</header>
+
+<section class="hero">
+  <h1>Everyday things, delivered.</h1>
+  <p>Browse by category, add what you need, and check out in a minute.</p>
+</section>
+
+<div class="bar" id="cats" role="group" aria-label="Categories"></div>
+<main class="grid" id="grid"></main>
+
+<div class="veil" id="veil"></div>
+<aside id="cart" aria-label="Shopping cart">
+  <div class="ch"><h2>Your cart</h2><button class="close" id="closeCart" aria-label="Close cart">×</button></div>
+  <div class="items" id="items"></div>
+  <div class="foot">
+    <div class="ship" id="ship"></div>
+    <div class="track"><i id="bar"></i></div>
+    <div class="total"><span>Total</span><span id="total">₹0</span></div>
+    <button class="buy" id="buy">Place order</button>
+  </div>
+</aside>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const P=[
+{id:1,n:'Steel water bottle',c:'Home',p:699,e:'🧴',bg:'#CFE8E4'},
+{id:2,n:'Pour-over coffee set',c:'Kitchen',p:1499,e:'☕',bg:'#F5DDB8'},
+{id:3,n:'Non-stick frying pan',c:'Kitchen',p:899,e:'🍳',bg:'#F7D2C4'},
+{id:4,n:'Wireless earbuds',c:'Tech',p:2499,e:'🎧',bg:'#D5DAF3'},
+{id:5,n:'Power bank 10,000 mAh',c:'Tech',p:1299,e:'🔋',bg:'#E1EBC4'},
+{id:6,n:'Cotton t-shirt',c:'Fashion',p:549,e:'👕',bg:'#F3D0DC'},
+{id:7,n:'Canvas backpack',c:'Fashion',p:1799,e:'🎒',bg:'#D7E4F2'},
+{id:8,n:'Desk lamp',c:'Home',p:1199,e:'💡',bg:'#F8EBB5'},
+{id:9,n:'Bluetooth speaker',c:'Tech',p:1999,e:'🔊',bg:'#D8D2EE'},
+{id:10,n:'Chef’s knife',c:'Kitchen',p:999,e:'🔪',bg:'#DDE3E6'},
+{id:11,n:'Running shoes',c:'Fashion',p:2999,e:'👟',bg:'#F9D9B8'},
+{id:12,n:'Scented candle',c:'Home',p:449,e:'🕯️',bg:'#EAD3EA'}
+];
+const FREE=1500;
+const cart={};
+const $=id=>document.getElementById(id);
+const rs=n=>'₹'+n.toLocaleString('en-IN');
+let cat='All',term='';
+
+const cats=['All',...new Set(P.map(x=>x.c))];
+$('cats').innerHTML=cats.map(c=>`<button class="chip" aria-pressed="${c==='All'}" data-c="${c}">${c}</button>`).join('')
+ +`<select id="sort" aria-label="Sort"><option value="">Sort: Featured</option><option value="lo">Price: low to high</option><option value="hi">Price: high to low</option></select>`;
+
+function show(){
+  let list=P.filter(x=>(cat==='All'||x.c===cat)&&x.n.toLowerCase().includes(term));
+  const s=$('sort').value;
+  if(s==='lo')list.sort((a,b)=>a.p-b.p);
+  if(s==='hi')list.sort((a,b)=>b.p-a.p);
+  $('grid').innerHTML=list.length?list.map(x=>`
+   <article class="card"><div class="pic" style="background:${x.bg}" aria-hidden="true">${x.e}</div>
+   <div class="body"><h3>${x.n}</h3><span class="meta">${x.c}</span>
+   <div class="row"><span class="price">${rs(x.p)}</span><button class="add" data-add="${x.id}">Add to cart</button></div></div></article>`).join('')
+   :'<p class="empty">No products match your search. Try a different word or category.</p>';
+}
+function drawCart(){
+  const ids=Object.keys(cart);
+  let total=0,n=0;
+  $('items').innerHTML=ids.length?ids.map(id=>{
+    const x=P.find(p=>p.id==id),q=cart[id];total+=x.p*q;n+=q;
+    return `<div class="item"><div class="e">${x.e}</div><div><strong>${x.n}</strong>
+    <div class="qty"><button data-d="-1" data-id="${id}" aria-label="Remove one">−</button><span>${q}</span><button data-d="1" data-id="${id}" aria-label="Add one">+</button></div></div>
+    <span>${rs(x.p*q)}</span></div>`}).join('')
+   :'<p class="empty">Your cart is empty. Add something from the shop.</p>';
+  $('count').textContent=n;
+  $('total').textContent=rs(total);
+  $('buy').disabled=!n;
+  const left=FREE-total;
+  $('ship').textContent=!n?`Free delivery on orders above ${rs(FREE)}.`:left>0?`Add ${rs(left)} more for free delivery.`:'You’ve got free delivery.';
+  $('bar').style.width=Math.min(100,total/FREE*100)+'%';
+}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('on'),2000)}
+function panel(o){$('cart').classList.toggle('open',o);$('veil').classList.toggle('on',o)}
+
+$('cats').addEventListener('click',e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  cat=b.dataset.c;
+  document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===b));
+  show();
+});
+$('cats').addEventListener('change',show);
+$('q').addEventListener('input',e=>{term=e.target.value.trim().toLowerCase();show()});
+$('grid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-add]');if(!b)return;
+  cart[b.dataset.add]=(cart[b.dataset.add]||0)+1;drawCart();toast('Added to cart');
+});
+$('items').addEventListener('click',e=>{
+  const b=e.target.closest('[data-d]');if(!b)return;
+  const id=b.dataset.id;cart[id]+=+b.dataset.d;
+  if(cart[id]<1)delete cart[id];drawCart();
+});
+$('openCart').onclick=()=>panel(true);
+$('closeCart').onclick=$('veil').onclick=()=>panel(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')panel(false)});
+$('buy').onclick=()=>{
+  for(const k in cart)delete cart[k];
+  drawCart();panel(false);toast('Order placed. Thank you!');
+};
+show();drawCart();
+</script>
+</body>
+</html>
